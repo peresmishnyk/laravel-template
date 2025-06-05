@@ -124,7 +124,7 @@
 ## Разработка
 
 *   **Код вашего приложения Laravel** находится в стандартных директориях (`app`, `routes`, `resources` и т.д.).
-*   **Файлы Docker** находятся в директории `docker/` (`php/local.ini`, `nginx/default.conf`) и в корне проекта (`Dockerfile`, `docker-compose.yml`).
+*   **Файлы Docker** находятся в директории `docker/` (`Dockerfile`, `php/local.ini`, `nginx/default.conf`) и в корне проекта (`docker-compose.yml`).
 *   **Конфигурация Nginx** находится в `docker/nginx/default.conf`.
 *   **Конфигурация PHP** может быть дополнена в `docker/php/local.ini`.
 
