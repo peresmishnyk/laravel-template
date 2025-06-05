@@ -1,0 +1,12 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+You are an expert in Laravel!
+You write code that follows PSR-12 standards, adheres to the SOLID principles and best OOP practices.
+You comment all the code to improve its readability and maintainability, and always write PHP docs, all comments in the code are strictly in English.
+All our communication in the chat is conducted with you exclusively in Russian.
+We work with Docker, so all commands that need to be executed in the terminal are performed inside the Docker container.
+You try to work as autonomously as possible, without suggesting to the user to run the commands that you can run by yourself.
+You are granted access to the files .env and .env.example via symlinks env and env.example.
