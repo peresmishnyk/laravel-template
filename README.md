@@ -1,140 +1,140 @@
 # Laravel Docker Template
 
-Этот проект представляет собой шаблон для быстрого старта разработки приложений на Laravel с использованием Docker. Он включает настроенное окружение с PHP, Nginx, MySQL и Redis, а также Makefile для упрощения управления проектом.
+This project is a template for quickly starting Laravel application development using Docker. It includes a configured environment with PHP, Nginx, MySQL, and Redis, as well as a Makefile to simplify project management.
 
-## Требования
+## Requirements
 
-*   **Docker** и **Docker Compose**: Убедитесь, что они установлены и работают в вашей системе. ([Инструкция по установке Docker](https://docs.docker.com/get-docker/))
-*   **Make**: Утилита `make` должна быть установлена. Обычно она доступна в большинстве \*nix систем. Для Windows можно использовать `make` из WSL или аналогичные инструменты.
-*   **Git**: Для клонирования репозитория и управления версиями.
+*   **Docker** and **Docker Compose**: Ensure they are installed and running on your system. ([Docker Installation Guide](https://docs.docker.com/get-docker/))
+*   **Make**: The `make` utility must be installed. It is usually available on most *nix systems. For Windows, you can use `make` from WSL or similar tools.
+*   **Git**: For cloning the repository and version control.
 
-## Начало работы
+## Getting Started
 
-1.  **Клонируйте репозиторий**:
+1.  **Clone the repository**:
     ```bash
-    git clone <URL_ВАШЕГО_РЕПОЗИТОРИЯ> my-laravel-project
+    git clone <YOUR_REPOSITORY_URL> my-laravel-project
     cd my-laravel-project
     ```
 
-2.  **Инициализируйте проект**:
-    Эта команда выполнит все необходимые шаги для первого запуска: создаст `.env` файл из `env.example`, соберет Docker-образы, запустит контейнеры и сгенерирует ключ приложения (`APP_KEY`).
+2.  **Initialize the project**:
+    This command will perform all necessary steps for the first run: create the `.env` file from `env.example`, build Docker images, start containers, and generate the application key (`APP_KEY`).
     ```bash
     make init
     ```
-    После выполнения этой команды ваше приложение должно быть доступно по адресу `http://localhost` (или по значению `APP_URL` из вашего `.env` файла).
+    After this command, your application should be available at `http://localhost` (or the `APP_URL` value from your `.env` file).
 
-3.  **(Опционально) Установите зависимости Composer, если это не первый `make init` или вы добавили новые пакеты вручную:**
+3.  **(Optional) Install Composer dependencies if this is not the first `make init` or if you have manually added new packages:**
     ```bash
     make composer install
     ```
 
-4.  **(Опционально) Выполните миграции базы данных:**
+4.  **(Optional) Run database migrations:**
     ```bash
     make artisan migrate
     ```
 
-## Файл окружения `.env`
+## Environment File `.env`
 
-При выполнении `make init` файл `.env` автоматически создается из `env.example`.
-Файл `env.example` уже настроен для работы с Docker-сервисами, определенными в `docker-compose.yml`:
-*   База данных: MySQL, хост `db`, порт `3306`.
-*   Redis: хост `redis`, порт `6379`.
-*   Драйверы сессий, кэша и очередей настроены на использование `redis`.
+When you run `make init`, the `.env` file is automatically created from `env.example`.
+The `env.example` file is already configured to work with the Docker services defined in `docker-compose.yml`:
+*   Database: MySQL, host `db`, port `3306`.
+*   Redis: host `redis`, port `6379`.
+*   Session, cache, and queue drivers are configured to use `redis`.
 
-Вы можете отредактировать `.env` для изменения этих настроек, например, имени базы данных, пользователя, пароля (рекомендуется изменить стандартный пароль `password` на более надежный). После изменения `.env` может потребоваться перезапуск контейнеров (`make restart`).
+You can edit `.env` to change these settings, such as the database name, user, password (it is recommended to change the default password `password` to a more secure one). After changing `.env`, you may need to restart the containers (`make restart`).
 
-## Доступные `make` команды
+## Available `make` commands
 
-Ниже представлен список команд, доступных через `Makefile`. Вы можете также выполнить `make help` в терминале, чтобы увидеть этот список.
+Below is a list of commands available via `Makefile`. You can also run `make help` in the terminal to see this list.
 
 *   `make init`
-    *   **Описание**: Инициализирует проект: настраивает `.env` и символические ссылки, собирает образы, запускает сервисы, генерирует `APP_KEY` и создает символическую ссылку для хранилища (`storage:link`).
-    *   **Когда использовать**: При первом запуске проекта или после `make full-reset`.
+    *   **Description**: Initializes the project: sets up `.env` and symlinks, builds images, starts services, generates `APP_KEY`, and creates the storage symlink (`storage:link`).
+    *   **When to use**: On the first project run or after `make full-reset`.
 
 *   `make up`
-    *   **Описание**: Запускает сервисы в фоновом режиме.
-    *   **Когда использовать**: Для запуска остановленных Docker-контейнеров.
+    *   **Description**: Starts services in detached mode.
+    *   **When to use**: To start stopped Docker containers.
 
-*   `make down` (или `make stop`)
-    *   **Описание**: Останавливает сервисы.
-    *   **Когда использовать**: Для остановки Docker-контейнеров.
+*   `make down` (or `make stop`)
+    *   **Description**: Stops services.
+    *   **When to use**: To stop Docker containers.
 
 *   `make restart`
-    *   **Описание**: Перезапускает сервисы (эквивалентно `make down && make up`).
-    *   **Когда использовать**: Если нужно перезапустить все контейнеры, например, после изменения конфигурации.
+    *   **Description**: Restarts services (equivalent to `make down && make up`).
+    *   **When to use**: If you need to restart all containers, for example, after configuration changes.
 
 *   `make build`
-    *   **Описание**: Собирает или пересобирает сервисы.
-    *   **Когда использовать**: Если вы изменили `Dockerfile` или другие файлы, влияющие на сборку образов.
+    *   **Description**: Builds or rebuilds services.
+    *   **When to use**: If you have changed `Dockerfile` or other files affecting image builds.
 
 *   `make logs`
-    *   **Описание**: Показывает логи всех сервисов в реальном времени.
-    *   **Когда использовать**: Для отслеживания работы всех контейнеров.
+    *   **Description**: Shows logs of all services in real-time.
+    *   **When to use**: To monitor the operation of all containers.
 
 *   `make logs-app`
-    *   **Описание**: Показывает логи сервиса приложения (`laravel_app`) в реальном времени.
-    *   **Когда использовать**: Для отслеживания логов конкретно вашего Laravel-приложения.
+    *   **Description**: Shows logs of the application service (`laravel_app`) in real-time.
+    *   **When to use**: To specifically monitor your Laravel application logs.
 
 *   `make ps`
-    *   **Описание**: Показывает список запущенных контейнеров.
-    *   **Когда использовать**: Для проверки статуса Docker-контейнеров.
+    *   **Description**: Lists running containers.
+    *   **When to use**: To check the status of Docker containers.
 
 *   `make shell`
-    *   **Описание**: Предоставляет доступ к командной оболочке `sh` контейнера приложения.
-    *   **Когда использовать**: Для выполнения команд внутри контейнера приложения (например, `php -v`).
+    *   **Description**: Accesses the `sh` shell of the application container.
+    *   **When to use**: To execute commands inside the application container (e.g., `php -v`).
 
 *   `make bash`
-    *   **Описание**: Предоставляет доступ к командной оболочке `bash` контейнера приложения (если `bash` установлен в контейнере).
-    *   **Когда использовать**: Аналогично `make shell`, но с использованием `bash`.
+    *   **Description**: Accesses the `bash` shell of the application container (if `bash` is installed in the container).
+    *   **When to use**: Similar to `make shell`, but using `bash`.
 
-*   `make artisan [команда_artisan]`
-    *   **Описание**: Выполняет указанную команду Artisan внутри контейнера приложения.
-    *   **Пример**: `make artisan migrate`, `make artisan queue:work`, `make artisan make:controller MyController`
-    *   **Когда использовать**: Для выполнения любых команд Laravel Artisan.
+*   `make artisan [artisan_command]`
+    *   **Description**: Executes the specified Artisan command inside the application container.
+    *   **Example**: `make artisan migrate`, `make artisan queue:work`, `make artisan make:controller MyController`
+    *   **When to use**: To run any Laravel Artisan commands.
 
-*   `make composer [команда_composer]`
-    *   **Описание**: Выполняет указанную команду Composer внутри контейнера приложения.
-    *   **Пример**: `make composer install`, `make composer update`, `make composer require laravel/sanctum`
-    *   **Когда использовать**: Для управления зависимостями PHP.
+*   `make composer [composer_command]`
+    *   **Description**: Executes the specified Composer command inside the application container.
+    *   **Example**: `make composer install`, `make composer update`, `make composer require laravel/sanctum`
+    *   **When to use**: To manage PHP dependencies.
 
-*   `make npm [команда_npm]`
-    *   **Описание**: Выполняет указанную команду npm внутри контейнера приложения. Это полезно для управления JavaScript зависимостями и сборки фронтенд-ассетов.
-    *   **Пример**: `make npm install`, `make npm run build`, `make npm run dev`
-    *   **Когда использовать**: Для установки npm-пакетов, сборки ассетов (например, с помощью Vite, как в команде `make npm run build`) или запуска сервера разработки Vite (`make npm run dev`).
+*   `make npm [npm_command]`
+    *   **Description**: Executes the specified npm command inside the application container. This is useful for managing JavaScript dependencies and building frontend assets.
+    *   **Example**: `make npm install`, `make npm run build`, `make npm run dev`
+    *   **When to use**: To install npm packages, build assets (e.g., with Vite, as in the `make npm run build` command), or run the Vite development server (`make npm run dev`).
 
 *   `make test`
-    *   **Описание**: Запускает тесты PHPUnit.
-    *   **Когда использовать**: Для запуска автоматизированных тестов вашего приложения.
+    *   **Description**: Runs PHPUnit tests.
+    *   **When to use**: To run automated tests for your application.
 
 *   `make clear-cache`
-    *   **Описание**: Очищает различные кэши Laravel (optimize, cache, config, route, view).
-    *   **Когда использовать**: Если у вас возникли проблемы, связанные с кэшированием.
+    *   **Description**: Clears various Laravel caches (optimize, cache, config, route, view).
+    *   **When to use**: If you encounter caching-related issues.
 
 *   `make permissions`
-    *   **Описание**: Устанавливает корректные права доступа для директорий `storage` и `bootstrap/cache` внутри контейнера приложения. Запускается от имени `root`.
-    *   **Когда использовать**: Если возникают проблемы с правами доступа на запись в эти директории.
+    *   **Description**: Sets correct permissions for `storage` and `bootstrap/cache` directories inside the application container. Runs as `root`.
+    *   **When to use**: If there are write permission issues in these directories.
 
 *   `make full-reset`
-    *   **Описание**: !! ОПАСНАЯ КОМАНДА !! Сохраняет незакоммиченные изменения в `git stash`, выполняет `git reset --hard HEAD` (сбрасывая все изменения в рабочей директории до последнего коммита), ПОЛНОСТЬЮ пересоздает окружение Docker (включая удаление всех томов Docker, что означает **потерю данных в БД**), удаляет симлинки `env` и `env.example`, и затем заново инициализирует проект с помощью `make init`.
-    *   **Когда использовать**: Когда нужно полностью "обнулить" проект и начать с чистого листа, например, при серьезных проблемах с окружением или для тестирования процесса инициализации. **Используйте с большой осторожностью!** Сохраненные изменения можно будет восстановить из `git stash`.
+    *   **Description**: !! DANGEROUS COMMAND !! Stashes uncommitted changes, runs `git reset --hard HEAD` (resetting all changes in the working directory to the last commit), COMPLETELY recreates the Docker environment (including deleting all Docker volumes, which means **loss of DB data**), removes `env` and `env.example` symlinks, and then re-initializes the project using `make init`.
+    *   **When to use**: When you need to completely "reset" the project and start fresh, for example, in case of serious environment problems or to test the initialization process. **Use with extreme caution!** Stashed changes can be recovered from `git stash`.
 
 *   `make help`
-    *   **Описание**: Отображает экран справки со списком всех доступных `make` команд.
+    *   **Description**: Displays the help screen with a list of all available `make` commands.
 
-## Разработка
+## Development
 
-*   **Код вашего приложения Laravel** находится в стандартных директориях (`app`, `routes`, `resources` и т.д.).
-*   **Файлы Docker** находятся в директории `docker/` (`Dockerfile`, `php/local.ini`, `nginx/default.conf`) и в корне проекта (`docker-compose.yml`).
-*   **Конфигурация Nginx** находится в `docker/nginx/default.conf`.
-*   **Конфигурация PHP** может быть дополнена в `docker/php/local.ini`.
+*   **Your Laravel application code** is in the standard directories (`app`, `routes`, `resources`, etc.).
+*   **Docker files** are in the `docker/` directory (`Dockerfile`, `php/local.ini`, `nginx/default.conf`) and in the project root (`docker-compose.yml`).
+*   **Nginx configuration** is in `docker/nginx/default.conf`.
+*   **PHP configuration** can be extended in `docker/php/local.ini`.
 
-## Устранение неисправностей
+## Troubleshooting
 
-*   **Проблемы с правами доступа**: Попробуйте выполнить `make permissions`.
-*   **Приложение не работает после изменений**: Проверьте логи с помощью `make logs` или `make logs-app`.
-*   **Неожиданное поведение**: Попробуйте очистить кэш с помощью `make clear-cache`.
-*   **Если ничего не помогает**: Можно рассмотреть `make full-reset`, но помните о потере данных в Docker-томах (например, в базе данных).
+*   **Permission issues**: Try running `make permissions`.
+*   **Application not working after changes**: Check logs using `make logs` or `make logs-app`.
+*   **Unexpected behavior**: Try clearing the cache with `make clear-cache`.
+*   **If nothing else helps**: Consider `make full-reset`, but remember the loss of data in Docker volumes (e.g., in the database).
 
 ---
 
-Надеемся, этот шаблон поможет вам быстро начать работу над вашим следующим проектом на Laravel!
+We hope this template helps you get started quickly on your next Laravel project!
