@@ -1,172 +1,130 @@
+# Makefile for managing the Docker environment
+
+# Default shell for Makefile
+SHELL := /bin/bash
+
+# Get current user and group ID for Docker commands, if not set use 1000
+UID := $(shell id -u)
+GID := $(shell id -g)
+USER := $(shell whoami)
+
+# Docker Compose command
+COMPOSE = docker compose
+
+# Default target (executed when running `make` without arguments)
 .DEFAULT_GOAL := help
-.PHONY: init up down stop restart build logs logs-app ps shell artisan composer npm test clear-cache permissions help full-reset
+
+# Variables for service names
+APP_SERVICE_NAME = app
+
+# Script content for setting HOST_DOCKER_GID is now in .get_docker_gid.sh
+
+# Phony targets (targets that are not files)
+.PHONY: init up down restart build logs shell composer npm test cache-clear permissions help full-reset
 
 # Variables
 DOCKER_COMPOSE := docker compose
-APP_CONTAINER_NAME := laravel_app # Matches container_name in docker-compose.yml
-PHP_ARTISAN := $(DOCKER_COMPOSE) exec $(APP_CONTAINER_NAME) php artisan
-COMPOSER_CMD := $(DOCKER_COMPOSE) exec $(APP_CONTAINER_NAME) composer
-NPM_CMD := $(DOCKER_COMPOSE) exec $(APP_CONTAINER_NAME) npm
+APP_CONTAINER := app
+PHP_ARTISAN := $(DOCKER_COMPOSE) exec $(APP_CONTAINER) php artisan
+COMPOSER := $(DOCKER_COMPOSE) exec $(APP_CONTAINER) composer
+NPM := $(DOCKER_COMPOSE) exec $(APP_CONTAINER) npm
 
-init: ## Initialize project: Setup .env & symlinks, build images, start services, generate APP_KEY, link storage.
+init: ## Initialize project: copy .env, build images, start services
 	@echo "Initializing project..."
-
-	@echo "\n--- Step 1: Setting up .env file ---"
 	@if [ ! -f .env ]; then \
-		echo "'.env' file not found. Copying from '.env.example'..."; \
 		cp .env.example .env; \
-		echo "'.env' created from '.env.example'. Please review and update if necessary."; \
-	else \
-		echo "'.env' file already exists."; \
 	fi
-
-	@echo "\n--- Step 2: Creating/updating symlinks ---"
 	@ln -sf .env env
 	@ln -sf .env.example env.example
-	@echo "Symlinks ensured: 'env' -> '.env', 'env.example' (symlink) -> '.env.example' (file)"
-
-	@echo "\n--- Step 3: Building Docker images for all services ---"
 	$(DOCKER_COMPOSE) build
-
-	@echo "\n--- Step 4: Starting all Docker services ---"
-	$(DOCKER_COMPOSE) up -d --remove-orphans
-
-	@echo "\n--- Step 5: Ensuring APP_KEY is set in .env ---"
-	@if [ -f .env ] && ! grep -q "^APP_KEY=[^[:space:]].*" .env; then \
-		echo "APP_KEY is missing or empty in '.env'. Generating APP_KEY..."; \
-		$(PHP_ARTISAN) key:generate; \
-		echo "APP_KEY generated successfully."; \
-	elif [ ! -f .env ]; then \
-		echo "Error: '.env' file not found. Cannot generate APP_KEY. This should not happen after Step 1."; \
-	else \
-		echo "APP_KEY already exists and is non-empty in '.env'. Skipping automatic generation."; \
-	fi
-	@echo "To manually regenerate the key later, run 'make artisan key:generate'."
-
-	@echo "\n--- Step 6: Creating storage symlink ---"
+	$(DOCKER_COMPOSE) up -d
+	$(PHP_ARTISAN) key:generate
 	$(PHP_ARTISAN) storage:link
-	@echo "Storage symlink created (or already exists)."
+	$(COMPOSER) install
+	$(NPM) install
+	@echo "Project initialized! Access at http://localhost"
 
-	@echo "\nInitialization complete! Project is building and starting."
-	@echo "Access your application at http://localhost (or as configured in APP_URL in .env) once services are up."
+up: ## Start all services
+	$(DOCKER_COMPOSE) up -d
 
-up: ## Start services in detached mode
-	@echo "Starting Docker services..."
-	$(DOCKER_COMPOSE) up -d --remove-orphans
-
-down: ## Stop services
-	@echo "Stopping Docker services..."
+down: ## Stop all services
 	$(DOCKER_COMPOSE) down
 
-stop: down ## Alias for down
+restart: down up ## Restart all services
 
-restart: ## Restart services
-	@echo "Restarting Docker services..."
-	$(MAKE) down
-	$(MAKE) up
-
-build: ## Build or rebuild services
-	@echo "Building Docker images..."
+build: ## Rebuild all services
 	$(DOCKER_COMPOSE) build
 
-logs: ## Follow logs of all services
-	@echo "Following Docker logs..."
+logs: ## View logs of all services
 	$(DOCKER_COMPOSE) logs -f
 
-logs-app: ## Follow logs of the app service
-	@echo "Following $(APP_CONTAINER_NAME) logs..."
-	$(DOCKER_COMPOSE) logs -f $(APP_CONTAINER_NAME)
+shell: ## Access app container shell
+	$(DOCKER_COMPOSE) exec $(APP_CONTAINER) sh
 
-ps: ## List running containers
-	@echo "Listing Docker containers..."
-	$(DOCKER_COMPOSE) ps
-
-shell: ## Access the app container's shell (sh)
-	@echo "Accessing $(APP_CONTAINER_NAME) container shell..."
-	$(DOCKER_COMPOSE) exec $(APP_CONTAINER_NAME) sh
-
-bash: ## Access the app container's shell (bash, if available)
-	@echo "Accessing $(APP_CONTAINER_NAME) container shell (bash)..."
-	$(DOCKER_COMPOSE) exec $(APP_CONTAINER_NAME) bash
-
-artisan: ## Run an Artisan command (e.g., make artisan migrate)
+composer: ## Run Composer command (e.g., make composer require package)
 	@if [ -z "$(filter-out $@,$(MAKECMDGOALS))" ]; then \
-		echo "Please provide an Artisan command. Example: make artisan migrate"; \
+		echo "Usage: make composer require package-name"; \
 		exit 1; \
 	fi
-	@echo "Running Artisan command: $(filter-out $@,$(MAKECMDGOALS))"
-	$(PHP_ARTISAN) $(filter-out $@,$(MAKECMDGOALS))
+	$(COMPOSER) $(filter-out $@,$(MAKECMDGOALS))
 
-composer: ## Run a Composer command (e.g., make composer install)
+npm: ## Run NPM command (e.g., make npm install)
 	@if [ -z "$(filter-out $@,$(MAKECMDGOALS))" ]; then \
-		echo "Please provide a Composer command. Example: make composer install"; \
+		echo "Usage: make npm install"; \
 		exit 1; \
 	fi
-	@echo "Running Composer command: $(filter-out $@,$(MAKECMDGOALS))"
-	$(COMPOSER_CMD) $(filter-out $@,$(MAKECMDGOALS))
+	$(NPM) $(filter-out $@,$(MAKECMDGOALS))
 
-npm: ## Run an npm command (e.g., make npm install, make npm run build)
-	@if [ -z "$(filter-out $@,$(MAKECMDGOALS))" ]; then \
-		echo "Please provide an npm command. Example: make npm install or make npm run build"; \
-		exit 1; \
-	fi
-	@echo "Running npm command: $(filter-out $@,$(MAKECMDGOALS))"
-	$(NPM_CMD) $(filter-out $@,$(MAKECMDGOALS))
-
-test: ## Run PHPUnit tests
-	@echo "Running PHPUnit tests..."
+test: ## Run tests
 	$(PHP_ARTISAN) test
 
-clear-cache: ## Clear Laravel caches
-	@echo "Clearing Laravel caches..."
+cache-clear: ## Clear all Laravel caches
 	$(PHP_ARTISAN) optimize:clear
-	$(PHP_ARTISAN) cache:clear
-	$(PHP_ARTISAN) config:clear
-	$(PHP_ARTISAN) route:clear
-	$(PHP_ARTISAN) view:clear
 
-permissions: ## Set correct permissions for storage and bootstrap/cache (runs as root)
-	@echo "Setting permissions for storage and bootstrap/cache..."
-	$(DOCKER_COMPOSE) exec -u root $(APP_CONTAINER_NAME) chown -R laravel:laravel /var/www/html/storage /var/www/html/bootstrap/cache
-	$(DOCKER_COMPOSE) exec -u root $(APP_CONTAINER_NAME) chmod -R ug+w /var/www/html/storage /var/www/html/bootstrap/cache
-	@echo "Permissions set."
+permissions: ## Fix storage permissions
+	$(DOCKER_COMPOSE) exec -u root $(APP_CONTAINER) chown -R www-data:www-data /var/www/storage
+	$(DOCKER_COMPOSE) exec -u root $(APP_CONTAINER) chmod -R 775 /var/www/storage
 
-full-reset: ## !! DANGEROUS !! Stash changes, hard reset git, FULLY recreate Docker env (volumes, networks), re-init.
-	@echo "WARNING: This will stash uncommitted changes, hard reset your current branch, delete Docker volumes, and re-initialize the project."
-	@echo "Proceed with caution!"
+help: ## Show this help
+	@echo "Available commands:"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+
+full-reset: ## !! DANGEROUS !! Stash all changes (including untracked), hard reset, and reinitialize
+	@echo "WARNING: This will stash all changes, perform git reset --hard, and reset the environment completely!"
 	@echo "-----------------------------------------------------"
-
 	@echo "\n--- Step 1: Stashing current changes (including untracked files) ---"
-	@BRANCH_NAME=$$$(git rev-parse --abbrev-ref HEAD); \
-	DATETIME=$$$(date +'%Y-%m-%d %H:%M:%S'); \
-	STASH_MESSAGE="Auto-stash before full-reset on branch '$${BRANCH_NAME}' at $${DATETIME}"; \
-	git add .; \
-	if ! git diff --staged --quiet || ! git diff --quiet || [ -n "$$$(git ls-files --others --exclude-standard)" ]; then \
-		git stash push -u -m "$${STASH_MESSAGE}"; \
-		echo "Changes stashed with message: '$${STASH_MESSAGE}'"; \
+	@BRANCH_NAME=$$(git rev-parse --abbrev-ref HEAD); \
+	DATETIME=$$(date +'%Y-%m-%d %H:%M:%S'); \
+	STASH_MESSAGE="Auto-stash before full-reset on branch '$$BRANCH_NAME' at $$DATETIME"; \
+	if ! git diff --staged --quiet || ! git diff --quiet || [ -n "$$(git ls-files --others --exclude-standard)" ]; then \
+		git stash push -u -m "$$STASH_MESSAGE"; \
+		echo "Changes stashed with message: '$$STASH_MESSAGE'"; \
 	else \
 		echo "No changes to stash."; \
 	fi
 
-	@echo "\n--- Step 2: Performing git reset --hard HEAD ---"
+	@echo "\n--- Step 2: Performing git reset --hard ---"
 	@git reset --hard HEAD
 	@echo "Git repository reset to HEAD."
 
-	@echo "\n--- Step 3: Stopping and removing Docker containers, volumes, and orphaned images ---"
-	$(DOCKER_COMPOSE) down -v --remove-orphans
-	@echo "Docker environment cleaned."
+	@echo "\n--- Step 3: Stopping and removing Docker containers ---"
+	$(MAKE) down
 
-	@echo "\n--- Step 4: Removing symlinks env and env.example ---"
+	@echo "\n--- Step 4: Removing environment files and symlinks ---"
+	@rm -f .env
 	@rm -f env
 	@rm -f env.example
-	@echo "Symlinks env and env.example removed."
 
-	@echo "\n--- Step 5: Re-initializing project with 'make init' ---"
+	@echo "\n--- Step 5: Reinitializing project ---"
 	$(MAKE) init
 
 	@echo "\n-----------------------------------------------------"
 	@echo "Full reset complete! Your environment has been rebuilt."
+	@echo "To recover stashed changes:"
+	@echo "1. git stash list - to see your stashes"
+	@echo "2. git stash apply - to apply the latest stash"
+	@echo "3. git stash drop - to remove the applied stash"
+	@echo "-----------------------------------------------------"
 
-help: ## Display this help screen
-	@echo "Available commands:"
-	@grep -E '^[a-zA-Z0-9_%/-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+%:
+	@:
